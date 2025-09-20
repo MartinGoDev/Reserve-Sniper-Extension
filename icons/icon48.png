@@ -1,0 +1,12 @@
+PNG Placeholder - 48x48
+This is a placeholder for the actual PNG icon.
+In a real implementation, you would replace this with an actual PNG file.
+
+To create real PNG icons:
+1. Use an image editor (GIMP, Photoshop, etc.)
+2. Create a 48x48 pixel image
+3. Design with the Wallapop Filter theme
+4. Save as PNG with transparency
+5. Replace this file with the actual PNG
+
+For now, Chrome will use a default icon if this file is missing.

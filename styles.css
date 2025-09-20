@@ -1,0 +1,26 @@
+/* Wallapop Filter Extension - Styles */
+
+/* Indicador de filtro */
+#wallapop-filter-indicator {
+  position: fixed !important;
+  top: 10px !important;
+  right: 10px !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  z-index: 10000 !important;
+  font-family: Arial, sans-serif !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+/* Productos ocultos por la extensión */
+.wallapop-filter-hidden {
+  display: none !important;
+}
+
+/* Productos visibles por la extensión */
+.wallapop-filter-visible {
+  display: block !important;
+}
