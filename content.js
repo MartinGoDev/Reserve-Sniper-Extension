@@ -771,7 +771,7 @@ class WallapopFilter {
         e.preventDefault();
         // Aquí puedes poner tu URL de GitHub cuando la tengas
         console.log('📚 Redirigiendo a GitHub para guía de uso...');
-        // window.open('TU_URL_DE_GITHUB', '_blank');
+        window.open('https://github.com/MartinGoDev/Reserve-Sniper-Extension?tab=readme-ov-file', '_blank');
       });
     }
 
