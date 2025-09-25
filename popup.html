@@ -6,7 +6,7 @@
     <title>Reserve Sniper</title>
     <style>
         body {
-            width: 300px;
+            width: 250px;
             padding: 16px;
             font-family: Arial, sans-serif;
             margin: 0;
@@ -20,7 +20,7 @@
         
         .header h1 {
             margin: 0;
-            font-size: 18px;
+            font-size: 16px;
             color: #333;
         }
         
@@ -28,7 +28,6 @@
             background: white;
             border-radius: 8px;
             padding: 12px;
-            margin-bottom: 16px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
@@ -36,85 +35,22 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
-            font-size: 14px;
+            font-size: 13px;
         }
         
         .status-item:last-child {
             margin-bottom: 0;
         }
         
-        .filters {
+        .info {
             background: white;
             border-radius: 8px;
             padding: 12px;
+            margin-top: 12px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .filters h3 {
-            margin: 0 0 12px 0;
-            font-size: 16px;
-            color: #333;
-        }
-        
-        .filter-option {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 8px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            background: white;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-        
-        .filter-option:hover {
-            border-color: #007bff;
-            background: #f8f9fa;
-        }
-        
-        .filter-option.active {
-            border-color: #007bff;
-            background: #007bff;
-            color: white;
-        }
-        
-        .filter-option:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .filter-option:last-child {
-            margin-bottom: 0;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 8px;
             font-size: 12px;
             color: #666;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-size: 12px;
-            z-index: 1000;
-        }
-        
-        .notification.error {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .notification.success {
-            background: #28a745;
-            color: white;
+            text-align: center;
         }
     </style>
 </head>
@@ -138,17 +74,8 @@
         </div>
     </div>
     
-    <div class="filters">
-        <h3>Filtros</h3>
-        <button class="filter-option" data-mode="all">
-            📋 Mostrar Todos
-        </button>
-        <button class="filter-option" data-mode="available">
-            ✅ Solo Disponibles
-        </button>
-        <button class="filter-option" data-mode="reserved">
-            🔒 Solo Reservados
-        </button>
+    <div class="info">
+        Usa el menú lateral para controlar los filtros
     </div>
     
     <script src="popup.js"></script>
