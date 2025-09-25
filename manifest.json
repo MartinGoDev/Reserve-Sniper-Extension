@@ -5,7 +5,8 @@
   "description": "Encuentra productos reservados y disponibles en Wallapop como un francotirador",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "content_scripts": [
     {
