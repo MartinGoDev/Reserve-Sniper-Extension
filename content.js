@@ -9,6 +9,44 @@ class WallapopFilter {
     this.init();
   }
 
+  // Helper para obtener URLs de iconos de forma segura
+  getIconURL(iconPath) {
+    try {
+      return chrome.runtime.getURL(iconPath);
+    } catch (error) {
+      console.warn('⚠️ Error obteniendo URL del icono:', error);
+      // Fallback: usar un icono SVG embebido como data URL
+      return this.getFallbackIcon(iconPath);
+    }
+  }
+
+  // Fallback iconos como SVG embebidos
+  getFallbackIcon(iconPath) {
+    const iconMap = {
+      'icons/logo.png': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCA0MiA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjEiIGN5PSIyMSIgcj0iMjEiIGZpbGw9IiMwMDdiZmYiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjYiIGhlaWdodD0iMjYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMiAxNWwtNS01IDEuNDEtMS40MUwxMCAxNC4xN2w3LjU5LTcuNTlMMTkgOGwtOSA5eiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cjwvc3ZnPgo=',
+      'icons/mafiaIcon.png': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCA0MiA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjEiIGN5PSIyMSIgcj0iMjEiIGZpbGw9IiNkYzM1NDUiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjYiIGhlaWdodD0iMjYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMSA1aDJ2Nmg0djJoLTZ2LTZ6IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+Cg=='
+    };
+    
+    return iconMap[iconPath] || iconMap['icons/logo.png'];
+  }
+
+  // Helper para enviar mensajes de forma segura
+  safeSendMessage(message, callback) {
+    try {
+      chrome.runtime.sendMessage(message, (response) => {
+        if (chrome.runtime.lastError) {
+          console.warn('⚠️ Error en sendMessage:', chrome.runtime.lastError.message);
+          if (callback) callback(null);
+        } else {
+          if (callback) callback(response);
+        }
+      });
+    } catch (error) {
+      console.warn('⚠️ Error enviando mensaje:', error);
+      if (callback) callback(null);
+    }
+  }
+
   init() {
     console.log('🚀 Reserve Sniper iniciado');
     
@@ -251,7 +289,7 @@ class WallapopFilter {
         <!-- Header -->
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <img id="sidebar-logo" src="${chrome.runtime.getURL('icons/logo.png')}" style="
+            <img id="sidebar-logo" src="${this.getIconURL('icons/logo.png')}" style="
               width: 56px;
               height: 56px;
               transition: all 0.3s ease;
@@ -488,7 +526,7 @@ class WallapopFilter {
     `;
     
     this.sidebarTab.innerHTML = `
-      <img src="${chrome.runtime.getURL('icons/logo.png')}" style="
+      <img src="${this.getIconURL('icons/logo.png')}" style="
         width: 42px;
         height: 42px;
         margin-bottom: 6px;
@@ -509,7 +547,7 @@ class WallapopFilter {
       // Cambiar a mafiaIcon en hover
       const tabImg = this.sidebarTab.querySelector('img');
       if (tabImg) {
-        tabImg.src = chrome.runtime.getURL('icons/mafiaIcon.png');
+        tabImg.src = this.getIconURL('icons/mafiaIcon.png');
       }
     });
     
@@ -630,9 +668,13 @@ class WallapopFilter {
     tabImg.style.opacity = '0.6';
     
     setTimeout(() => {
-      tabImg.src = chrome.runtime.getURL(iconSrc);
-      tabImg.style.transform = 'scale(1)';
-      tabImg.style.opacity = '1';
+      try {
+        tabImg.src = this.getIconURL(iconSrc);
+        tabImg.style.transform = 'scale(1)';
+        tabImg.style.opacity = '1';
+      } catch (error) {
+        console.warn('⚠️ Error actualizando icono del tab:', error);
+      }
     }, 150);
   }
 
@@ -664,9 +706,13 @@ class WallapopFilter {
     sidebarImg.style.opacity = '0.7';
     
     setTimeout(() => {
-      sidebarImg.src = chrome.runtime.getURL(iconSrc);
-      sidebarImg.style.transform = 'scale(1)';
-      sidebarImg.style.opacity = '1';
+      try {
+        sidebarImg.src = this.getIconURL(iconSrc);
+        sidebarImg.style.transform = 'scale(1)';
+        sidebarImg.style.opacity = '1';
+      } catch (error) {
+        console.warn('⚠️ Error actualizando icono del sidebar:', error);
+      }
     }, 150);
   }
 
@@ -779,39 +825,53 @@ class WallapopFilter {
   }
 
   setupMessageListener() {
-    // Escuchar mensajes del popup y responder siempre
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      console.log('📨 Mensaje recibido en content script:', request);
-      
-      try {
-      if (request.action === 'setFilter') {
-          console.log(`🔄 Aplicando filtro: ${request.mode}`);
-        this.setFilterMode(request.mode);
-        sendResponse({ success: true, mode: this.filterMode });
-      } else if (request.action === 'getStatus') {
-        const results = this.getSearchResults();
-          const status = { 
-          success: true, 
-          filterMode: this.filterMode,
-          totalResults: results.length,
-          isInitialized: this.isInitialized
-          };
-          console.log('📤 Enviando estado:', status);
-          sendResponse(status);
-        } else {
-          console.log('⚠️ Acción no reconocida:', request.action);
-          sendResponse({ success: false, error: 'Acción no reconocida' });
+    try {
+      // Escuchar mensajes del popup y responder siempre
+      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        console.log('📨 Mensaje recibido en content script:', request);
+        console.log('📨 Sender:', sender);
+        
+        try {
+          if (request.action === 'setFilter') {
+            console.log(`🔄 Aplicando filtro: ${request.mode}`);
+            this.setFilterMode(request.mode);
+            sendResponse({ success: true, mode: this.filterMode });
+          } else if (request.action === 'getStatus') {
+            const results = this.getSearchResults();
+            const status = { 
+              success: true, 
+              filterMode: this.filterMode,
+              totalResults: results.length,
+              isInitialized: this.isInitialized
+            };
+            console.log('📤 Enviando estado:', status);
+            sendResponse(status);
+          } else {
+            console.log('⚠️ Acción no reconocida:', request.action);
+            sendResponse({ success: false, error: 'Acción no reconocida' });
+          }
+        } catch (error) {
+          console.error('❌ Error procesando mensaje:', error);
+          sendResponse({ success: false, error: error.message });
         }
-      } catch (error) {
-        console.error('❌ Error procesando mensaje:', error);
-        sendResponse({ success: false, error: error.message });
-      }
+        
+        // IMPORTANTE: Siempre devolver true para mantener el canal abierto
+        return true;
+      });
       
-      // IMPORTANTE: Siempre devolver true para mantener el canal abierto
-      return true;
-    });
-    
-    console.log('📡 Message listener configurado');
+      console.log('📡 Message listener configurado');
+      
+      // Enviar señal de que el content script está listo
+      this.safeSendMessage({ action: 'contentScriptReady' }, (response) => {
+        if (response) {
+          console.log('📡 Content script listo y confirmado');
+        } else {
+          console.log('📡 Content script listo (sin respuesta del background)');
+        }
+      });
+    } catch (error) {
+      console.warn('⚠️ Error configurando message listener:', error);
+    }
   }
 
   debugResults() {
