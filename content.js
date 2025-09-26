@@ -471,18 +471,20 @@ class WallapopFilter {
     averagePriceDisplay.style.cssText = `
       background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
       color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 11px;
       font-weight: 600;
-      margin: 10px 0px;
       display: inline-block;
       box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 8px;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       position: fixed;
-      top: 20px;
+      bottom: 20px;
       left: 20px;
       z-index: 10000;
+      max-width: 200px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     `;
     averagePriceDisplay.innerHTML = `💰 Precio promedio: <strong>${this.priceAnalysis.averagePrice.toFixed(2)}€</strong> (${this.priceAnalysis.allPrices.length} items)`;
     
