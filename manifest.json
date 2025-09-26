@@ -6,7 +6,11 @@
   "permissions": [
     "activeTab",
     "storage",
-    "scripting"
+    "scripting",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "*://api.wallapop.com/*"
   ],
   "content_scripts": [
     {
@@ -16,6 +20,9 @@
       "run_at": "document_end"
     }
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Reserve Sniper",
@@ -34,7 +41,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*"],
+      "resources": ["icons/*", "inject.js"],
       "matches": ["*://es.wallapop.com/*", "*://www.wallapop.com/*"]
     }
   ]
