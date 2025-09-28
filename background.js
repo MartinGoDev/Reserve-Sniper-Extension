@@ -32,10 +32,35 @@ chrome.webRequest.onCompleted.addListener(
     {urls: ["*://api.wallapop.com/*"]}
 );
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "openConsole") {
-        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, {action: "focusConsole"});
-        });
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  try {
+    if (msg.action === 'contentScriptReady') {
+      sendResponse({ ok: true });      // responde sincronamente
+      return true;
     }
+
+    if (msg.action === 'openConsole') {
+      (async () => {
+        try {
+          chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+            if (tabs[0]) {
+              chrome.tabs.sendMessage(tabs[0].id, {action: "focusConsole"});
+            }
+          });
+          sendResponse({ ok: true });
+        } catch (e) {
+          sendResponse({ ok: false, error: String(e) });
+        }
+      })();
+      return true; // <- crítico en async
+    }
+
+    // fallback para acciones desconocidas
+    sendResponse({ ok: false, error: 'unknown_action' });
+    return true;
+
+  } catch (e) {
+    try { sendResponse({ ok: false, error: String(e) }); } catch {}
+    return true;
+  }
 });
