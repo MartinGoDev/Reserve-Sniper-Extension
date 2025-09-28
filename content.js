@@ -10,6 +10,9 @@ class WallapopFilter {
     // Constante para límite de precio máximo
     this.PRICE_MAX = 100000;
     
+    // Flag para detectar si el contexto está invalidado
+    this.contextInvalidated = false;
+    
     // Nuevas funcionalidades del injector
     this.priceAnalysis = {
       allPrices: [],
@@ -31,6 +34,14 @@ class WallapopFilter {
       apiItems: []
     };
     
+    // Verificar contexto inmediatamente en el constructor
+    this.checkContextValidity();
+    
+    // Marcar contexto inválido al navegar
+    window.addEventListener('beforeunload', () => { 
+      this.contextInvalidated = true; 
+    });
+    
     this.init();
     this.addCustomStyles();
   }
@@ -50,44 +61,228 @@ class WallapopFilter {
 
   // Helper para obtener URLs de iconos de forma segura
   getIconURL(iconPath) {
+    // Verificar si podemos usar Chrome APIs de forma segura
+    if (!this.canUseChromeAPIs()) {
+      return this.getFallbackSVG(iconPath);
+    }
+    
+    // Solo usar iconos que están en la carpeta icons/
+    const validIcons = [
+      'icons/logo.png',
+      'icons/mafiaIcon.png',
+      'icons/icon16.png',
+      'icons/icon32.png',
+      'icons/icon48.png',
+      'icons/icon128.png',
+      'icons/icon16.svg',
+      'icons/icon32.svg',
+      'icons/icon48.svg',
+      'icons/icon128.svg',
+      'icons/bmc-brand-icon.svg',
+      'icons/github-mark-white.png',
+      'icons/github-mark-white.svg',
+      'icons/iconHaunt.png'
+    ];
+    
+    // Verificar que el icono esté en la lista de iconos válidos
+    if (!validIcons.includes(iconPath)) {
+      console.warn('⚠️ Icono no válido:', iconPath, 'usando logo.png por defecto');
+      iconPath = 'icons/logo.png';
+    }
+    
     try {
-      return chrome.runtime.getURL(iconPath);
+      const url = chrome.runtime.getURL(iconPath);
+      // Verificar si la URL es válida
+      if (!url || url.includes('undefined')) {
+        throw new Error('URL inválida generada');
+      }
+      return url;
     } catch (error) {
-      console.warn('⚠️ Error obteniendo URL del icono:', error);
-      // Fallback: usar un icono SVG embebido como data URL
-      return this.getFallbackIcon(iconPath);
+      console.warn('⚠️ Error obteniendo URL del icono:', error.message);
+      // Marcar contexto como invalidado para futuras llamadas
+      this.contextInvalidated = true;
+      return this.getFallbackSVG(iconPath);
     }
   }
 
-  // Fallback iconos como SVG embebidos
-  getFallbackIcon(iconPath) {
-    const iconMap = {
+  // Fallback SVG para cuando chrome.runtime no está disponible
+  getFallbackSVG(iconPath) {
+    const svgMap = {
       'icons/logo.png': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCA0MiA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjEiIGN5PSIyMSIgcj0iMjEiIGZpbGw9IiMwMDdiZmYiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjYiIGhlaWdodD0iMjYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMiAxNWwtNS01IDEuNDEtMS40MUwxMCAxNC4xN2w3LjU5LTcuNTlMMTkgOGwtOSA5eiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cjwvc3ZnPgo=',
-      'icons/mafiaIcon.png': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCA0MiA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjEiIGN5PSIyMSIgcj0iMjEiIGZpbGw9IiNkYzM1NDUiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjYiIGhlaWdodD0iMjYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMSA1aDJ2Nmg0djJoLTZ2LTZ6IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+Cg=='
+      'icons/mafiaIcon.png': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCA0MiA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjEiIGN5PSIyMSIgcj0iMjEiIGZpbGw9IiNkYzM1NDUiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjYiIGhlaWdodD0iMjYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMSA1aDJ2Nmg0djJoLTZ2LTZ6IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+Cg==',
+      'icons/iconHaunt.png': 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDIiIGhlaWdodD0iNDIiIHZpZXdCb3g9IjAgMCA0MiA0MiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjEiIGN5PSIyMSIgcj0iMjEiIGZpbGw9IiM2NjY2NjYiLz4KPHN2ZyB4PSI4IiB5PSI4IiB3aWR0aD0iMjYiIGhlaWdodD0iMjYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMSA1aDJ2Nmg0djJoLTZ2LTZ6IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+Cg=='
     };
     
-    return iconMap[iconPath] || iconMap['icons/logo.png'];
+    return svgMap[iconPath] || svgMap['icons/logo.png'];
   }
 
   // Helper para enviar mensajes de forma segura
+  // Enviar mensaje de forma segura con timeout e ignorar errores benignos
   safeSendMessage(message, callback) {
     try {
-      chrome.runtime.sendMessage(message, (response) => {
-        if (chrome.runtime.lastError) {
-          console.warn('⚠️ Error en sendMessage:', chrome.runtime.lastError.message);
-          if (callback) callback(null);
-        } else {
-          if (callback) callback(response);
+      // Verificar si es seguro enviar
+      if (!this.shouldSend()) {
+        if (callback) callback(null);
+        return;
+      }
+
+      // Fire-and-forget si no esperas respuesta
+      if (!callback) { 
+        if (this.canUseChromeAPIs()) {
+          chrome.runtime.sendMessage(message); 
         }
+        return; 
+      }
+
+      // Verificar si podemos enviar
+      if (!this.canUseChromeAPIs()) {
+        console.warn('⚠️ Chrome APIs no disponibles, saltando sendMessage');
+        callback(null);
+        return;
+      }
+
+      let done = false;
+      const to = setTimeout(() => { 
+        if (!done) { 
+          done = true; 
+          callback(null); 
+        } 
+      }, 1200);
+
+      chrome.runtime.sendMessage(message, (response) => {
+        if (done) return;
+        done = true; 
+        clearTimeout(to);
+
+        const err = chrome.runtime.lastError?.message || '';
+        if (err) {
+          // Ignora casos típicos de navegación / SW descargado (benignos)
+          const benign = /Extension context invalidated|message port closed|before a response/i.test(err);
+          if (!benign) console.warn('⚠️ sendMessage error:', err);
+          
+          // Marcar contexto como invalidado solo para errores críticos
+          if (err.includes('Extension context invalidated')) {
+            this.contextInvalidated = true;
+          }
+          
+          return callback(null);
+        }
+        callback(response);
       });
-    } catch (error) {
-      console.warn('⚠️ Error enviando mensaje:', error);
-      if (callback) callback(null);
+    } catch (e) {
+      console.warn('⚠️ Error enviando mensaje:', e);
+      callback && callback(null);
     }
+  }
+
+  // Detectar si el contexto está invalidado
+  checkContextValidity() {
+    if (this.contextInvalidated) return false;
+    
+    // Verificar si chrome está disponible
+    if (!chrome || !chrome.runtime) {
+      console.warn('⚠️ Chrome runtime no disponible, activando modo fallback');
+      this.contextInvalidated = true;
+      return false;
+    }
+    
+    // Verificar si las funciones específicas están disponibles
+    if (!chrome.runtime.getURL || !chrome.runtime.sendMessage) {
+      console.warn('⚠️ Chrome runtime functions no disponibles, activando modo fallback');
+      this.contextInvalidated = true;
+      return false;
+    }
+    
+    try {
+      // Intentar una operación simple de Chrome API
+      chrome.runtime.getURL('icons/logo.png');
+      return true;
+    } catch (error) {
+      console.warn('⚠️ Contexto invalidado detectado, activando modo fallback');
+      this.contextInvalidated = true;
+      return false;
+    }
+  }
+
+  // Verificar si podemos usar Chrome APIs de forma segura
+  canUseChromeAPIs() {
+    // Verificaciones básicas
+    if (!chrome || !chrome.runtime) return false;
+    if (this.contextInvalidated) return false;
+    
+    // Verificar si las funciones específicas están disponibles
+    if (!chrome.runtime.getURL || !chrome.runtime.sendMessage) return false;
+    
+    // Verificación adicional: intentar una operación simple
+    try {
+      // Hacer una llamada de prueba muy simple
+      chrome.runtime.getURL('test');
+      return true;
+    } catch (error) {
+      // Si falla, marcar como invalidado
+      if (error.message && error.message.includes('Extension context invalidated')) {
+        console.warn('⚠️ Contexto invalidado detectado en verificación, activando modo fallback');
+        this.contextInvalidated = true;
+      }
+      return false;
+    }
+  }
+
+  // Verificar si es seguro enviar mensajes
+  shouldSend() {
+    return !this.contextInvalidated && document.readyState !== 'unloading';
+  }
+
+  // Limpiar recursos y listeners
+  destroy() {
+    console.log('🧹 Limpiando recursos de WallapopFilter...');
+    
+    // Marcar como invalidado
+    this.contextInvalidated = true;
+    
+    // Desconectar observer
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    
+    // Limpiar intervalos
+    if (this.sidebarInterval) {
+      clearInterval(this.sidebarInterval);
+      this.sidebarInterval = null;
+    }
+    
+    // Remover sidebar del DOM
+    if (this.sidebar) {
+      this.sidebar.remove();
+      this.sidebar = null;
+    }
+    
+    // Remover tab del DOM
+    if (this.sidebarTab) {
+      this.sidebarTab.remove();
+      this.sidebarTab = null;
+    }
+    
+    // Remover estilos
+    const styles = document.getElementById('wallapop-filter-styles');
+    if (styles) {
+      styles.remove();
+    }
+    
+    console.log('✅ Recursos limpiados');
   }
 
   init() {
     console.log('🚀 Reserve Sniper iniciado');
+    
+    // Verificar validez del contexto al inicializar
+    this.checkContextValidity();
+    
+    // Verificación adicional: si el contexto está invalidado, activar modo fallback inmediatamente
+    if (this.contextInvalidated) {
+      console.warn('⚠️ Contexto invalidado detectado al inicializar, activando modo fallback completo');
+    }
     
     // Cargar configuración guardada
     this.loadSettings();
@@ -1230,98 +1425,11 @@ class WallapopFilter {
 
   // Agregar estadísticas KPI al sidebar
   addKpiStatsToSidebar() {
-    if (!this.filterIndicator) return;
+    if (!this.filterIndicator) return;  
+   
     
-    // Verificar si ya existen las estadísticas KPI
-    if (this.filterIndicator.querySelector('#kpi-stats-section')) return;
     
-    const kpiSection = document.createElement('div');
-    kpiSection.id = 'kpi-stats-section';
-    kpiSection.style.cssText = `
-      background: rgba(255,255,255,0.15);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-      border: 1px solid rgba(255,255,255,0.2);
-    `;
-    
-    kpiSection.innerHTML = `
-      <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">📊 KPIs Avanzados</h3>
-      <div style="font-size: 14px; line-height: 1.6;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-          <span style="opacity: 0.9;">Matching API:</span>
-          <span id="kpi-matched-items" style="font-weight: 600;">0</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-          <span style="opacity: 0.9;">Autores únicos:</span>
-          <span id="kpi-unique-authors" style="font-weight: 600;">0</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-          <span style="opacity: 0.9;">Usuarios bloqueados:</span>
-          <span id="kpi-blocked-users" style="font-weight: 600;">0</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-          <span style="opacity: 0.9;">Anuncios eliminados:</span>
-          <span id="kpi-blocked-ads" style="font-weight: 600;">0</span>
-        </div>
-      </div>
-      <div style="margin-top: 16px;">
-        <button id="force-price-analysis" style="
-          background: linear-gradient(135deg, #00d4aa 0%, #00d4aadd 100%);
-          color: white;
-          border: none;
-          padding: 8px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          margin-right: 8px;
-          width: calc(50% - 4px);
-        ">💰 Forzar Análisis</button>
-        <button id="reset-counters" style="
-          background: linear-gradient(135deg, #ff6b6b 0%, #ff6b6bdd 100%);
-          color: white;
-          border: none;
-          padding: 8px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          width: calc(50% - 4px);
-        ">🔄 Reiniciar</button>
-      </div>
-    `;
-    
-    // Insertar antes de la sección de filtros
-    // Usar ID específico en lugar de selector CSS no soportado
-    const filtersSection = this.filterIndicator.querySelector('#filters-section');
-    if (filtersSection) {
-      this.filterIndicator.insertBefore(kpiSection, filtersSection);
-    } else {
-      // Fallback: insertar al final
-      this.filterIndicator.appendChild(kpiSection);
-    }
-    
-    // Configurar event listeners
-    const forceAnalysisBtn = kpiSection.querySelector('#force-price-analysis');
-    const resetBtn = kpiSection.querySelector('#reset-counters');
-    
-    if (forceAnalysisBtn) {
-      forceAnalysisBtn.addEventListener('click', () => {
-        this.priceAnalysis.isComplete = false;
-        this.priceAnalysis.attempts = 0;
-        this.priceAnalysis.allPrices = [];
-        this.priceAnalysis.averagePrice = 0;
-        this.clearPreviousAnalysis();
-        setTimeout(() => this.analyzePagePrices(), 500);
-      });
-    }
-    
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        this.resetCounters();
-      });
-    }
+    // Los botones de control han sido eliminados
     
     // Actualizar valores
     this.updateKpiDisplay();
@@ -1361,7 +1469,7 @@ class WallapopFilter {
     this.showNotification('Contadores reiniciados');
   }
 
-  // NOTA: clearPreviousAnalysis() ya está definido arriba - método duplicado eliminado
+
 
   addFilterIndicator() {
     // Remover indicador existente si existe
@@ -1669,6 +1777,8 @@ class WallapopFilter {
     // Actualizar estado cada 2 segundos
     setInterval(() => {
       if (this.isInitialized) {
+        // Verificar validez del contexto periódicamente
+        this.checkContextValidity();
         this.updateFilterIndicator();
       }
     }, 2000);
@@ -1766,19 +1876,16 @@ class WallapopFilter {
       }
     }
 
-    // Efecto de cambio de icono con animación en el tab
-    tabImg.style.transform = 'scale(0.7)';
-    tabImg.style.opacity = '0.6';
-    
-    setTimeout(() => {
-      try {
-        tabImg.src = this.getIconURL(iconSrc);
-        tabImg.style.transform = 'scale(1)';
-        tabImg.style.opacity = '1';
-      } catch (error) {
-        console.warn('⚠️ Error actualizando icono del tab:', error);
-      }
-    }, 150);
+    // Cambio directo de icono sin animaciones complejas
+    try {
+      tabImg.src = this.getIconURL(iconSrc);
+      tabImg.style.transform = 'scale(1)';
+      tabImg.style.opacity = '1';
+    } catch (error) {
+      console.warn('⚠️ Error actualizando icono del tab:', error);
+      // Fallback a logo.png
+      tabImg.src = this.getIconURL('icons/logo.png');
+    }
   }
 
   updateSidebarIcon() {
@@ -1804,19 +1911,16 @@ class WallapopFilter {
       }
     }
 
-    // Efecto de cambio de icono con animación
-    sidebarImg.style.transform = 'scale(0.8)';
-    sidebarImg.style.opacity = '0.7';
-    
-    setTimeout(() => {
-      try {
-        sidebarImg.src = this.getIconURL(iconSrc);
-        sidebarImg.style.transform = 'scale(1)';
-        sidebarImg.style.opacity = '1';
-      } catch (error) {
-        console.warn('⚠️ Error actualizando icono del sidebar:', error);
-      }
-    }, 150);
+    // Cambio directo de icono sin animaciones complejas
+    try {
+      sidebarImg.src = this.getIconURL(iconSrc);
+      sidebarImg.style.transform = 'scale(1)';
+      sidebarImg.style.opacity = '1';
+    } catch (error) {
+      console.warn('⚠️ Error actualizando icono del sidebar:', error);
+      // Fallback a logo.png
+      sidebarImg.src = this.getIconURL('icons/logo.png');
+    }
   }
 
   setupSidebarEvents() {
@@ -2025,6 +2129,8 @@ let wallapopFilter;
 function initializeFilter() {
   if (wallapopFilter) {
     console.log('🔄 Reinicializando filtro...');
+    // Limpiar instancia anterior
+    wallapopFilter.destroy();
   }
   
   wallapopFilter = new WallapopFilter();
@@ -2040,9 +2146,27 @@ if (document.readyState === 'loading') {
   initializeFilter();
 }
 
-// Reinicializar en navegación SPA
+// Reinicializar en navegación SPA con debounce y guards
+let spaNavigationTimeout = null;
 window.addEventListener('popstate', () => {
-  setTimeout(initializeFilter, 500);
+  // Limpiar timeout anterior
+  if (spaNavigationTimeout) {
+    clearTimeout(spaNavigationTimeout);
+  }
+  
+  // Marcar contexto como inválido durante navegación
+  if (window.wallapopFilter) {
+    window.wallapopFilter.contextInvalidated = true;
+  }
+  
+  // Reinicializar con debounce
+  spaNavigationTimeout = setTimeout(() => {
+    if (window.wallapopFilter) {
+      // Limpiar instancia anterior
+      window.wallapopFilter.destroy?.();
+    }
+    initializeFilter();
+  }, 500);
 });
 
 // Funcionalidad de debug (solo para desarrollo)
